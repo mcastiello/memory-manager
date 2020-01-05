@@ -1,0 +1,25 @@
+{
+  "name": "memory-manager-service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/memory-manager.js",
+  "scripts": {
+    "build": "webpack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mcastiello/memory-manager.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mcastiello/memory-manager/issues"
+  },
+  "homepage": "https://github.com/mcastiello/memory-manager#readme",
+  "devDependencies": {
+    "webpack": "^4.41.5",
+    "webpack-cli": "^3.3.10",
+    "worker-loader": "^2.0.0"
+  }
+}
