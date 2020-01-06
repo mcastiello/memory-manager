@@ -31,7 +31,7 @@ manager.update(obj, {
 });
 
 // You can get a reference to the original object
-manager.reference(id) === obj; // true
+console.log(manager.reference(id) === obj); // true
 ```
 
 You can create cross references between data objects by storing the data inside another object.
@@ -58,7 +58,7 @@ Garbage collection can be forced manually, even if the object is cross reference
 // To force an object to be disposed even if it has been recently updated and/or is cross referenced.
 manager.dispose(obj);
 
-manager.get(linked, "reference"); // Will return 'null'
+console.log(manager.get(linked, "reference")); // null
 
 // Force a garbage collection
 manager.flush();
@@ -74,7 +74,8 @@ manager.set(obj, "arr", arr);
 const proxy = manager.get(obj, "arr");
 
 console.log(proxy); // Proxy {0: "My Array"}
-
-Array.isArray(proxy); // true
-proxy === arr // false
+console.log(proxy[0]); // "My Array"
+console.log(proxy.length); // 1
+console.log(Array.isArray(proxy)); // true
+console.log(proxy === arr); // false
 ```
