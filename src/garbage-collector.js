@@ -26,7 +26,7 @@ setInterval(() => garbageCollect(), 500);
 self.addEventListener("message", event => {
     switch (event.data.name) {
         case "create":
-            initialiseData(event.data.index, event.data.isGlobalScope);
+            initialiseData(event.data.index);
             break;
         case "update":
             updateData(event.data.index, event.data.content);
@@ -58,8 +58,7 @@ self.addEventListener("message", event => {
 const shouldBeCollected = data => {
     const time = Date.now();
     
-    return !data.isGlobalScope && 
-        data.referenced.length === 0 && 
+    return data.referenced.length === 0 &&
         time-data.timestamp > garbageTimeDiff;
 };
 
@@ -75,13 +74,11 @@ const garbageCollect = () => {
 /**
  * Initialise a data element.
  * @param {String} index
- * @param {Boolean} isGlobalScope
  */
-const initialiseData = (index, isGlobalScope) => {
+const initialiseData = (index) => {
     dataMap.set(index, {
         "timestamp": Date.now(),
         "data": {},
-        "isGlobalScope": isGlobalScope,
         "references": [],
         "referenced": []
     });
@@ -121,19 +118,17 @@ const updateData = (index, data) => {
  */
 const disposeData = index => {
     const content = dataMap.get(index);
-    
-    if (!content.isGlobalScope) {
-        for (let reference of content.references) {
-            disposeReference(reference, index);
-        }
 
-        dataMap.delete(index);
-
-        self.postMessage({
-            "name": "delete",
-            "index": index
-        });
+    for (let reference of content.references) {
+        disposeReference(reference, index);
     }
+
+    dataMap.delete(index);
+
+    self.postMessage({
+        "name": "delete",
+        "index": index
+    });
 };
 
 /**

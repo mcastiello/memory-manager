@@ -67,7 +67,7 @@ manager.flush();
 ### Array Proxies
 In order to keep the garbage collector always up to date, whenever you store an array inside a data object, this will replaced with a Proxy object that will work as a middlewher between you and the actual array. The object itself will work exactly as an array, but it will look weird if you log it on the console.
 ```javascript
-const arr = ["My Array"]
+const arr = ["My Array"];
 
 manager.set(obj, "arr", arr);
 
@@ -78,4 +78,31 @@ console.log(proxy[0]); // "My Array"
 console.log(proxy.length); // 1
 console.log(Array.isArray(proxy)); // true
 console.log(proxy === arr); // false
+```
+### Use case
+It's not really up to me to tell you how to use the data. In my case, I created this service in order to be able to create composed classes (like mixins), but with a common private area where data can be easily passed across all the composing classes.
+
+Anyway, here is a very simple example on how to use the data:
+```javascript
+import manager from 'memory-manager-service';
+
+class MyClass {
+    constructor() {
+        manager.create(this, {
+            "name": ""
+        });
+    }
+    
+    get id() {
+        return manager.get(this, "id");
+    }
+    
+    get name() {
+        return manager.get(this, "name");
+    }
+    
+    set name(value) {
+        manager.set(this, "name", value);
+    }
+}
 ```

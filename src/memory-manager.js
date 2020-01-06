@@ -37,6 +37,13 @@ const dataMap = new Map();
 const complexDataMap = new Map();
 
 /**
+ * List of all the callbacks executed when an object is disposed.
+ * @type {Map<String, Function>}
+ * @private
+ */
+const disposeCallbackMap = new Map();
+
+/**
  * Reference to the garbage collector.
  * @type {Worker}
  * @private
@@ -53,15 +60,21 @@ let collectionTime = 5000;
 
 // Add the listener to all the possible events triggered by the garbage collector.
 gc.addEventListener("message", event => {
+    const id = event.data.index;
     switch (event.data.name) {
         case "updated":
-            dataMap.set(event.data.index, event.data.content);
+            dataMap.set(id, event.data.content);
             break;
         case "delete":
-            indexReference.delete(event.data.index);
-            dataMap.delete(event.data.index);
-            complexDataMap.delete(event.data.index);
-            break
+            const callback = disposeCallbackMap.get(id);
+            if (callback) {
+                callback();
+                disposeCallbackMap.delete(id);
+            }
+            indexReference.delete(id);
+            dataMap.delete(id);
+            complexDataMap.delete(id);
+            break;
     }
 });
 
@@ -115,7 +128,7 @@ const isManagedIndex = (index) => {
 };
 
 /**
- * Get the value stored in a proxied array.
+ * Get the value stored in a proxy array.
  * @returns {*}
  * @private
  */
@@ -139,7 +152,7 @@ const getArrayValue = (index, list, id) => {
 };
 
 /**
- * Store a value into a proxied array.
+ * Store a value into a proxy array.
  * @returns {Boolean}
  * @private
  */
@@ -216,10 +229,10 @@ class MemoryManager {
 
             gc.postMessage({
                 "name": "create",
-                "index": id,
-                "isGlobalScope": Object.values(self).indexOf(object) >= 0
+                "index": id
             });
 
+            dataMap.set(id, {});
             indexReference.set(id, object);
             complexDataMap.set(id, new Map());
             
@@ -242,7 +255,7 @@ class MemoryManager {
         if (data) {
             let value = data[property];
             
-            if (isManagedIndex(value)) {
+            if (isManagedIndex(value) && property !== "id") {
                 value = indexReference.get(value);
             } else if (value === "ComplexData::" + property || Array.isArray(value)) {
                 value = complexDataMap.get(index).get(property);
@@ -299,7 +312,9 @@ class MemoryManager {
         const index = typeof reference === "string" ? reference : indexReference.get(reference);
 
         if (content && index && indexReference.has(index)) {
-            for (let key in content) {
+            const keys = Object.keys(content);
+            for (let i=0, ii=keys.length; i<ii; i++) {
+                const key = keys[i];
                 this.set(index, key, content[key]);
             }
         }
@@ -337,6 +352,19 @@ class MemoryManager {
                 "name": "dispose",
                 "index": index
             });
+        }
+    }
+
+    /**
+     * Store a callback that will be executed when the object is disposed.
+     * @param {String|Object} reference
+     * @param {Function} callback
+     */
+    setDisposeCallback(reference, callback) {
+        const index = typeof reference === "string" ? reference : indexReference.get(reference);
+
+        if (index) {
+            disposeCallbackMap.set(index, callback);
         }
     }
 
