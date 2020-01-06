@@ -4,10 +4,17 @@ This service can be used to generate an internal private data that gets automati
 
 The `Garbage Collector` is executed inside ad web worker which avoid that the data processing affects the main UI thread.
 
-### How to use
+### How to install
+Download the package from npm
+```
+npm install memory-manager-service
+```
+And then inport it in your code
 ```javascript
 import manager from 'memory-manager-service';
-
+```
+### How to use
+```javascript
 const obj = {};
 
 // Initialise the data.
