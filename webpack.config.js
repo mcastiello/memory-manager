@@ -9,7 +9,6 @@ const path = require('path');
 
 module.exports = {
     entry: './src/memory-manager.js',
-    devtool: 'source-map',
     output: {
         filename: 'memory-manager.js',
         path: path.resolve(__dirname, 'dist'),
