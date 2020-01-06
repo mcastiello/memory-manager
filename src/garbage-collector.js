@@ -11,15 +11,22 @@
  */
 const dataMap = new Map();
 
+/**
+ * Milliseconds limit since the last object update.
+ * If an object hasn't been updated during this time, 
+ * it is considered ready to be garbage collected.
+ * @type {Number}
+ */
+const garbageTimeDiff = 5000;
+
 // Main garbage collector loop.
 // When data is not referenced by anything and hasn't been used for more than
 // 30 seconds, it gets automatically disposed.
 setInterval(() => {
     const time = Date.now();
-    const diff = 10000;
 
     dataMap.forEach((content, index) => {
-        if (content.referenced.length === 0 && time-content.timestamp > diff) {
+        if (content.referenced.length === 0 && garbageTimeDiff-content.timestamp > diff) {
             disposeData(index);
         }
     });
@@ -36,6 +43,9 @@ self.addEventListener("message", event => {
             break;
         case "dispose":
             disposeData(event.data.index);
+            break
+        case "time":
+            garbageTimeDiff = event.data.time;
             break
     }
 });
