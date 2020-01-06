@@ -85,16 +85,21 @@ const generateUUID = () => {
 class MemoryManager {
     /**
      * Create the object data and initialise it with the provided content.
-     * The data will be automatically privided with an index.
+     * The data will be automatically provided with an index.
+     * The method will return the generated index.
      * @param {Object} object
      * @param {Object} [content]
+     * @returns {String}
      */
     create(object, content) {
+        let id;
         content = content || {};
+        
         if (indexReference.has(object)) {
+            id = indexReference.get(object);
             this.update(object, content);
         } else {
-            const id = generateUUID();
+            id = generateUUID();
             const data = Object.assign({
                 "id": id
             }, content);
@@ -108,6 +113,8 @@ class MemoryManager {
                 "content": data
             });
         }
+        
+        return id;
     }
 
     /**
@@ -183,12 +190,14 @@ class MemoryManager {
             reference = indexReference.get(reference);
         }
 
-        gc.postMessage({
-            "name": "update",
-            "index": indexReference.get(reference)
-        });
+        if (indexReference.has(reference)) {
+            gc.postMessage({
+                "name": "update",
+                "index": indexReference.get(reference)
+            });
 
-        return reference;
+            return reference;
+        }
     }
 
     /**
