@@ -1,8 +1,8 @@
 {
   "name": "memory-manager-service",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
-  "main": "dist/memory-manager.js",
+  "main": "src/memory-manager.js",
   "scripts": {
     "build": "webpack"
   },
