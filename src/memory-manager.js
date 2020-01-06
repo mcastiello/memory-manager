@@ -214,6 +214,15 @@ class MemoryManager {
             });
         }
     }
+
+    /**
+     * Flush the memory.
+     */
+    flush() {
+        gc.postMessage({
+            "name": "flush"
+        });
+    }
     
     /**
      * Gets the garbage collection time.
