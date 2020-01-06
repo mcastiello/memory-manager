@@ -17,7 +17,7 @@ const dataMap = new Map();
  * it is considered ready to be garbage collected.
  * @type {Number}
  */
-const garbageTimeDiff = 5000;
+let garbageTimeDiff = 5000;
 
 // Main garbage collector loop.
 // When data is not referenced by anything and hasn't been used for more than
