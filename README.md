@@ -34,9 +34,7 @@ manager.update(obj, {
 manager.reference(id) === obj; // true
 ```
 
-You can only store primitive values (string and numbers) or arrays and standard objects containing primitive values.
-
-You can create cross references between data objects by storing the data id inside another object.
+You can create cross references between data objects by storing the data inside another object.
 
 ```javascript
 import manager from 'memory-manager-service';
@@ -47,11 +45,9 @@ const linked = {};
 // Initialise the data.
 manager.create(obj);
 
-const id = manager.get(obj, "id");
-
 // Store the cross reference
 manager.create(linked, {
-    "reference": id
+    "reference": obj
 });
 ```
 
@@ -66,4 +62,19 @@ manager.get(linked, "reference"); // Will return 'null'
 
 // Force a garbage collection
 manager.flush();
+```
+
+### Array Proxies
+In order to keep the garbage collector always up to date, whenever you store an array inside a data object, this will replaced with a Proxy object that will work as a middlewher between you and the actual array. The object itself will work exactly as an array, but it will look weird if you log it on the console.
+```javascript
+const arr = ["My Array"]
+
+manager.set(obj, "arr", arr);
+
+const proxy = manager.get(obj, "arr");
+
+console.log(proxy); // Proxy {0: "My Array"}
+
+Array.isArray(proxy); // true
+proxy === arr // false
 ```
