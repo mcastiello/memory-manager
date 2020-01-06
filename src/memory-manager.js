@@ -30,6 +30,13 @@ const indexReference = new IndexMap();
 const dataMap = new Map();
 
 /**
+ * List of all the complex objects associated to the managed data.
+ * @type {Map<String, Object>}
+ * @private
+ */
+const complexDataMap = new Map();
+
+/**
  * Reference to the garbage collector.
  * @type {Worker}
  * @private
@@ -53,6 +60,7 @@ gc.addEventListener("message", event => {
         case "delete":
             indexReference.delete(event.data.index);
             dataMap.delete(event.data.index);
+            complexDataMap.delete(event.data.index);
             break
     }
 });
@@ -79,6 +87,95 @@ const generateUUID = () => {
 };
 
 /**
+ * Check if the parameter is a complex object, like an instance of a class.
+ * @returns {Boolean}
+ * @private
+ */
+const isComplexObject = (obj) => {
+    return Boolean(obj) && typeof obj === "object" && 
+        obj.prototype !== Object && !Array.isArray(obj);
+};
+
+/**
+ * Check if the parameter is an object stored in the manager.
+ * @returns {Boolean}
+ * @private
+ */
+const isManagedObject = (obj) => {
+    return Boolean(obj) && typeof obj === "object" && indexReference.has(obj);
+};
+
+/**
+ * Check if the parameter is the index of an objects stored in the manager.
+ * @returns {Boolean}
+ * @private
+ */
+const isManagedIndex = (index) => {
+    return typeof index === "string" && indexReference.has(index);
+};
+
+/**
+ * Generate a proxy element used to query the original array.
+ * @returns {Array}
+ */
+const storeArray = (index, property, arr) => {
+    /**
+     * Object containing all the traps to manage a proxy array of mangaed objects.
+     * @type {Object}
+     */
+    const arrayTrap = {
+        get: (list, prop) => {
+            let value = list[prop];
+            
+            if (!isNaN(prop)) {
+                if (isManagedIndex(value)) {
+                    value = indexReference.get(value);
+                } else if (/ComplexObject::/.test(value)) {
+                    value = complexDataMap.get(index).get(value.replace("ComplexObject::", ""));
+                }
+            }
+            
+            gc.postMessage({
+                "name": "update",
+                "index": index
+            });
+            
+            return value;
+        },
+        set: (list, prop, value) => {
+            if (!isNaN(prop)) {
+                if (isManagedObject(value)) {
+                    value = indexReference.get(value);
+                } else if (isComplexObject(value)) {
+                    complexDataMap.get(index).set(property + "::" + prop, value);
+                    value = "ComplexObject::" + property + "::" + prop;
+                } else if (value === null || value === undefined) {
+                    complexDataMap.get(index).delete(property + "::" + prop);
+                }
+            }
+            list[prop] = value;
+
+            gc.postMessage({
+                "name": "update",
+                "index": index,
+                "content": {
+                    [property]: list
+                }
+            });
+            return true;
+        },
+    };
+    for (let i=0, ii=arr.length; i<ii; i++) {
+        if (isManagedObject(value)) {
+            arr[i] = indexReference.get(arr[i]);
+        }
+    }
+    complexDataMap.get(index).set(property, new Proxy(arr, arrayTrap));
+    
+    return arr;
+};
+
+/**
  * Manage data generated for a specific object.
  * @class
  */
@@ -99,19 +196,20 @@ class MemoryManager {
             id = indexReference.get(object);
             this.update(object, content);
         } else {
-            id = generateUUID();
+            id = content.id || generateUUID();
             const data = Object.assign({
                 "id": id
             }, content);
 
-            indexReference.set(id, object);
-            dataMap.set(id, data);
-
             gc.postMessage({
                 "name": "create",
-                "index": id,
-                "content": data
+                "index": id
             });
+
+            indexReference.set(id, object);
+            complexDataMap.set(id, new Map());
+            
+            this.update(object, data);
         }
         
         return id;
@@ -128,12 +226,20 @@ class MemoryManager {
         const data = index && dataMap.get(index);
 
         if (data) {
+            let value = data[property];
+            
+            if (isManagedIndex(value)) {
+                value = indexReference.get(value);
+            } else if (value === "ComplexData::" + property || Array.isArray(value)) {
+                value = complexDataMap.get(index).get(property);
+            }
+            
             gc.postMessage({
                 "name": "update",
                 "index": index
             });
 
-            return data[property];
+            return value;
         }
     }
 
@@ -148,6 +254,16 @@ class MemoryManager {
         const data = index && dataMap.get(index);
 
         if (data) {
+            if (isManagedObject(value)) {
+                value = indexReference.get(value);
+            } else if (isComplexObject(value)) {
+                complexDataMap.get(index).set(property, value);
+                value = "ComplexData::" + property;
+            } else if (Array.isArray(value)) {
+                value = storeArray(index, property, value);
+            } else if (value === null || value === undefined) {
+                complexDataMap.get(index).delete(property);
+            }
             data[property] = value;
 
             gc.postMessage({
@@ -167,16 +283,11 @@ class MemoryManager {
      */
     update(reference, content) {
         const index = typeof reference === "string" ? reference : indexReference.get(reference);
-        const data = index && dataMap.get(index);
 
-        if (data) {
-            Object.assign(data, content);
-
-            gc.postMessage({
-                "name": "update",
-                "index": index,
-                "content": data
-            });
+        if (content && index && indexReference.has(index)) {
+            for (let key in content) {
+                this.set(index, key, content[key]);
+            }
         }
     }
 
