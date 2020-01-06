@@ -93,7 +93,7 @@ const generateUUID = () => {
  */
 const isComplexObject = (obj) => {
     return Boolean(obj) && typeof obj === "object" && 
-        obj.prototype !== Object && !Array.isArray(obj);
+        obj.constructor !== Object && !Array.isArray(obj);
 };
 
 /**
