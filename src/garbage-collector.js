@@ -26,7 +26,7 @@ setInterval(() => garbageCollect(), 500);
 self.addEventListener("message", event => {
     switch (event.data.name) {
         case "create":
-            initialiseData(event.data.index, event.data.isTopScope);
+            initialiseData(event.data.index, event.data.isGlobalScope);
             break;
         case "update":
             updateData(event.data.index, event.data.content);
@@ -58,7 +58,7 @@ self.addEventListener("message", event => {
 const shouldBeCollected = data => {
     const time = Date.now();
     
-    return !data.isTopScope && 
+    return !data.isGlobalScope && 
         data.referenced.length === 0 && 
         time-data.timestamp > garbageTimeDiff;
 };
@@ -75,13 +75,13 @@ const garbageCollect = () => {
 /**
  * Initialise a data element.
  * @param {String} index
- * @param {Boolean} isTopScope
+ * @param {Boolean} isGlobalScope
  */
-const initialiseData = (index, isTopScope) => {
+const initialiseData = (index, isGlobalScope) => {
     dataMap.set(index, {
         "timestamp": Date.now(),
         "data": {},
-        "isTopScope": isTopScope,
+        "isGlobalScope": isGlobalScope,
         "references": [],
         "referenced": []
     });
