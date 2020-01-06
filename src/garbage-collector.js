@@ -121,17 +121,19 @@ const updateData = (index, data) => {
  */
 const disposeData = index => {
     const content = dataMap.get(index);
+    
+    if (!content.isGlobalScope) {
+        for (let reference of content.references) {
+            disposeReference(reference, index);
+        }
 
-    for (let reference of content.references) {
-        disposeReference(reference, index);
+        dataMap.delete(index);
+
+        self.postMessage({
+            "name": "delete",
+            "index": index
+        });
     }
-
-    dataMap.delete(index);
-
-    self.postMessage({
-        "name": "delete",
-        "index": index
-    });
 };
 
 /**
