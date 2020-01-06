@@ -115,56 +115,69 @@ const isManagedIndex = (index) => {
 };
 
 /**
+ * Get the value stored in a proxied array.
+ * @returns {*}
+ * @private
+ */
+const getArrayValue = (index, list, id) => {
+    let value = list[id];
+
+    if (!isNaN(id)) {
+        if (isManagedIndex(value)) {
+            value = indexReference.get(value);
+        } else if (/ComplexObject::/.test(value)) {
+            value = complexDataMap.get(index).get(value.replace("ComplexObject::", ""));
+        }
+    }
+
+    gc.postMessage({
+        "name": "update",
+        "index": index
+    });
+
+    return value;
+};
+
+/**
+ * Store a value into a proxied array.
+ * @returns {Boolean}
+ * @private
+ */
+const setArrayValue = (index, property, list, id, value) => {
+    if (!isNaN(id)) {
+        if (isManagedObject(value)) {
+            value = indexReference.get(value);
+        } else if (isComplexObject(value)) {
+            complexDataMap.get(index).set(property + "::" + id, value);
+            value = "ComplexObject::" + property + "::" + id;
+        } else if (value === null || value === undefined) {
+            complexDataMap.get(index).delete(property + "::" + id);
+        }
+    }
+    list[id] = value;
+
+    gc.postMessage({
+        "name": "update",
+        "index": index,
+        "content": {
+            [property]: list
+        }
+    });
+    
+    return true;
+};
+
+/**
  * Generate a proxy element used to query the original array.
  * @returns {Array}
  */
 const storeArray = (index, property, arr) => {
-    /**
-     * Object containing all the traps to manage a proxy array of mangaed objects.
-     * @type {Object}
-     */
+    // Object containing all the traps to manage a proxy array of mangaed objects.
     const arrayTrap = {
-        get: (list, prop) => {
-            let value = list[prop];
-            
-            if (!isNaN(prop)) {
-                if (isManagedIndex(value)) {
-                    value = indexReference.get(value);
-                } else if (/ComplexObject::/.test(value)) {
-                    value = complexDataMap.get(index).get(value.replace("ComplexObject::", ""));
-                }
-            }
-            
-            gc.postMessage({
-                "name": "update",
-                "index": index
-            });
-            
-            return value;
-        },
-        set: (list, prop, value) => {
-            if (!isNaN(prop)) {
-                if (isManagedObject(value)) {
-                    value = indexReference.get(value);
-                } else if (isComplexObject(value)) {
-                    complexDataMap.get(index).set(property + "::" + prop, value);
-                    value = "ComplexObject::" + property + "::" + prop;
-                } else if (value === null || value === undefined) {
-                    complexDataMap.get(index).delete(property + "::" + prop);
-                }
-            }
-            list[prop] = value;
-
-            gc.postMessage({
-                "name": "update",
-                "index": index,
-                "content": {
-                    [property]: list
-                }
-            });
-            return true;
-        },
+        get: (...params) => getArrayValue(index, ...params),
+        set: (...params) => setArrayValue(index, property, ...params)
     };
+    
     for (let i=0, ii=arr.length; i<ii; i++) {
         if (isManagedObject(value)) {
             arr[i] = indexReference.get(arr[i]);
