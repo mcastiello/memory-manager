@@ -204,7 +204,7 @@ class MemoryManager {
             gc.postMessage({
                 "name": "create",
                 "index": id,
-                "isTopScope": Object.values(self).indexOf(object) >= 0
+                "isGlobalScope": Object.values(self).indexOf(object) >= 0
             });
 
             indexReference.set(id, object);
