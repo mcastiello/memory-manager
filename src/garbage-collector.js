@@ -45,7 +45,7 @@ self.addEventListener("message", event => {
             disposeData(event.data.index);
             break;
         case "time":
-            garbageTimeDiff = event.data.time;
+            garbageTimeDiff = event.data.value;
             break;
     }
 });
