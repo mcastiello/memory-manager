@@ -27,9 +27,9 @@ manager.update(obj, {
 manager.reference(id) === obj; // true
 ```
 
-You can only store primitive values (string and numbers) or arrays and standard objects contain primitive values.
+You can only store primitive values (string and numbers) or arrays and standard objects containing primitive values.
 
-You can create cross references between data objects by storing some data id inside another object.
+You can create cross references between data objects by storing the data id inside another object.
 
 ```javascript
 import manager from 'memory-manager-service';
