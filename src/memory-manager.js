@@ -36,6 +36,14 @@ const dataMap = new Map();
  */
 const gc = new GarbageCollector();
 
+/**
+ * Number of milliseconds used by the garbage collector to 
+ * decide if it needs to dispose of an object.
+ * @type {Number}
+ * @private
+ */
+let collectionTime = 5000;
+
 // Add the listener to all the possible events triggered by the garbage collector.
 gc.addEventListener("message", event => {
     switch (event.data.name) {
@@ -194,6 +202,30 @@ class MemoryManager {
             gc.postMessage({
                 "name": "dispose",
                 "index": index
+            });
+        }
+    }
+    
+    /**
+     * Gets the garbage collection time.
+     * @returns {Number}
+     */
+    get collectionTime() {
+        return collectionTime;
+    }
+    
+    /**
+     * Sets the garbage collection time.
+     * @param {Number} time
+     */
+    set collectionTime(time) {
+        time = Number(time);
+        if (!isNaN(time)) {
+            collectionTime = Math.round(time);
+            
+            gc.postMessage({
+                "name": "time",
+                "value": collectionTime
             });
         }
     }
