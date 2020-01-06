@@ -60,7 +60,7 @@ const garbageCollect = () => {
     const time = Date.now();
 
     dataMap.forEach((content, index) => {
-        if (content.referenced.length === 0 && garbageTimeDiff-content.timestamp > diff) {
+        if (content.referenced.length === 0 && time-content.timestamp > garbageTimeDiff) {
             disposeData(index);
         }
     });
