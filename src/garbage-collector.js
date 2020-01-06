@@ -20,17 +20,7 @@ const dataMap = new Map();
 let garbageTimeDiff = 5000;
 
 // Main garbage collector loop.
-// When data is not referenced by anything and hasn't been used for more than
-// 30 seconds, it gets automatically disposed.
-setInterval(() => {
-    const time = Date.now();
-
-    dataMap.forEach((content, index) => {
-        if (content.referenced.length === 0 && garbageTimeDiff-content.timestamp > diff) {
-            disposeData(index);
-        }
-    });
-}, 500);
+setInterval(() => garbageCollect(), 500);
 
 // Listen to all the messages from the main thread.
 self.addEventListener("message", event => {
@@ -47,8 +37,34 @@ self.addEventListener("message", event => {
         case "time":
             garbageTimeDiff = event.data.value;
             break;
+        case "flush":
+            const currentCollectionTime = garbageTimeDiff;
+            // Disable collection time delta
+            garbageTimeDiff = 0;
+            
+            // Force collection
+            garbageCollect();
+            
+            // Restore collection time
+            garbageTimeDiff = currentCollectionTime;
+            break;
     }
 });
+
+/**
+ * Collect all the object that are not cross referenced by 
+ * any other object and that hasn't been updated during the 
+ * collection time delta defined.
+ */
+const garbageCollect = () => {
+    const time = Date.now();
+
+    dataMap.forEach((content, index) => {
+        if (content.referenced.length === 0 && garbageTimeDiff-content.timestamp > diff) {
+            disposeData(index);
+        }
+    });
+};
 
 /**
  * Initialise a data element.
