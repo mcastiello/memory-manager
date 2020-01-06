@@ -26,7 +26,7 @@ setInterval(() => garbageCollect(), 500);
 self.addEventListener("message", event => {
     switch (event.data.name) {
         case "create":
-            initialiseData(event.data.index, {});
+            initialiseData(event.data.index, {}, event.data.isTopScope);
             break;
         case "update":
             updateData(event.data.index, event.data.content);
@@ -52,30 +52,38 @@ self.addEventListener("message", event => {
 });
 
 /**
+ * Check if a data object should be garbage collected.
+ * @returns {Boolean}
+ */
+const shouldBeCollected = data => {
+    const time = Date.now();
+    
+    return !data.isTopScope && 
+        data.referenced.length === 0 && 
+        time-data.timestamp > garbageTimeDiff;
+};
+
+/**
  * Collect all the object that are not cross referenced by 
  * any other object and that hasn't been updated during the 
  * collection time delta defined.
  */
 const garbageCollect = () => {
-    const time = Date.now();
-
-    dataMap.forEach((content, index) => {
-        if (content.referenced.length === 0 && time-content.timestamp > garbageTimeDiff) {
-            disposeData(index);
-        }
-    });
+    dataMap.forEach((content, index) => shouldBeCollected(content) && disposeData(index));
 };
 
 /**
  * Initialise a data element.
  * @param {String} index
- * @param {Object} [data]
+ * @param {Object} data
+ * @param {Boolean} isTopScope
  */
-const initialiseData = (index, data) => {
+const initialiseData = (index, data, isTopScope) => {
     const refs = loadReferences(data);
     const content = {
         "timestamp": Date.now(),
         "data": data,
+        "isTopScope": isTopScope,
         "references": refs,
         "referenced": []
     };
