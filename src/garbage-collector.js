@@ -26,7 +26,7 @@ setInterval(() => garbageCollect(), 500);
 self.addEventListener("message", event => {
     switch (event.data.name) {
         case "create":
-            initialiseData(event.data.index, event.data.content);
+            initialiseData(event.data.index, {});
             break;
         case "update":
             updateData(event.data.index, event.data.content);
