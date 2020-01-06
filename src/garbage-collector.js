@@ -78,18 +78,13 @@ const garbageCollect = () => {
  * @param {Boolean} isTopScope
  */
 const initialiseData = (index, isTopScope) => {
-    const content = {
+    dataMap.set(index, {
         "timestamp": Date.now(),
         "data": {},
         "isTopScope": isTopScope,
         "references": [],
         "referenced": []
-    };
-    dataMap.set(index, content);
-
-    for (let id of refs) {
-        addReference(id, index);
-    }
+    });
 };
 
 /**
