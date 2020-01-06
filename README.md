@@ -52,7 +52,11 @@ This will stop the `obj` data to be garbage collected until the `linked` object 
 
 Garbage collection can be forced manually, even if the object is cross referenced.
 ```javascript
+// To force an object to be disposed even if it has been recently updated and/or is cross referenced.
 manager.dispose(obj);
 
 manager.get(linked, "reference"); // Will return 'null'
+
+// Force a garbage collection
+manager.flush();
 ```
