@@ -2,6 +2,8 @@
 
 This service can be used to generate an internal private data that gets automatically disposed when it's not used anymore.
 
+Imagine it as a more advanced `WeakMap` with an internal `Garbage Collector` that tries to keep itself clean and tidy.
+
 The `Garbage Collector` is executed inside ad web worker which avoid that the data processing affects the main UI thread.
 
 ### How to install
