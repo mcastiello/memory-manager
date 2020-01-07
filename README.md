@@ -113,8 +113,8 @@ The service will allow you to add callbacks for each object to monitor whenever 
 ```javascript
 const person = new Person();
 
-manager.onUpdate(person, () => console.log(`Hello, ${person.name}!`);
-manager.onDispose(person, () => console.log(`Oh no! They disposed ${person.name}`);
+manager.onUpdate(person, () => console.log(`Hello, ${person.name}!`));
+manager.onDispose(person, () => console.log(`Oh no! They disposed ${person.name}!`));
 
 person.name = "Kenny"; // Hello, Kenny!
 manager.dispose(person); // Oh no! They disposed Kenny!

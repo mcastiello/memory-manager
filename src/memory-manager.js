@@ -63,7 +63,7 @@ const gc = new GarbageCollector();
  * @type {Number}
  * @private
  */
-let collectionTime = 5000;
+let collectionTime = 30000;
 
 // Add the listener to all the possible events triggered by the garbage collector.
 gc.addEventListener("message", event => {
@@ -442,5 +442,6 @@ class MemoryManager {
 
 // Initialise the service.
 const manager = new MemoryManager();
+manager.collectionTime = collectionTime;
 
 export default manager;
