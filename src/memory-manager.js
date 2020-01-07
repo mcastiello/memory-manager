@@ -44,6 +44,13 @@ const complexDataMap = new Map();
 const disposeCallbackMap = new Map();
 
 /**
+ * List of all the callbacks executed when a property is updated.
+ * @type {Map<String, Function>}
+ * @private
+ */
+const updateCallbackMap = new Map();
+
+/**
  * Reference to the garbage collector.
  * @type {Worker}
  * @private
@@ -74,6 +81,7 @@ gc.addEventListener("message", event => {
             indexReference.delete(id);
             dataMap.delete(id);
             complexDataMap.delete(id);
+            updateCallbackMap.delete(id);
             break;
     }
 });
@@ -168,14 +176,8 @@ const setArrayValue = (index, property, list, id, value) => {
         }
     }
     list[id] = value;
-
-    gc.postMessage({
-        "name": "update",
-        "index": index,
-        "content": {
-            [property]: list
-        }
-    });
+    
+    notifyUpdate(index, property, list);
     
     return true;
 };
@@ -199,6 +201,31 @@ const storeArray = (index, property, arr) => {
     complexDataMap.get(index).set(property, new Proxy(arr, arrayTrap));
     
     return arr;
+};
+
+/**
+ * Notify that a property value has been updated.
+ * Notification is sent to the Garbage Collector and 
+ * to the registered 'onUpdate' callback.
+ * @param {String} index
+ * @param {String} property
+ * @param {*} value
+ * @private
+ */
+const notifyUpdate = (index, property, value) => {
+    const callback = updateCallbackMap.get(index);
+
+    gc.postMessage({
+        "name": "update",
+        "index": index,
+        "content": {
+            [property]: value
+        }
+    });
+    
+    if (callback) {
+        callback(property, value);
+    }
 };
 
 /**
@@ -292,14 +319,8 @@ class MemoryManager {
                 complexDataMap.get(index).delete(property);
             }
             data[property] = value;
-
-            gc.postMessage({
-                "name": "update",
-                "index": index,
-                "content": {
-                    [property]: value
-                }
-            });
+    
+            notifyUpdate(index, property, value);
         }
     }
 
@@ -360,11 +381,24 @@ class MemoryManager {
      * @param {String|Object} reference
      * @param {Function} callback
      */
-    setDisposeCallback(reference, callback) {
+    onDispose(reference, callback) {
         const index = typeof reference === "string" ? reference : indexReference.get(reference);
 
         if (index) {
             disposeCallbackMap.set(index, callback);
+        }
+    }
+
+    /**
+     * Store a callback that will be executed when the object is updated.
+     * @param {String|Object} reference
+     * @param {Function} callback
+     */
+    onUpdate(reference, callback) {
+        const index = typeof reference === "string" ? reference : indexReference.get(reference);
+
+        if (index) {
+            updateCallbackMap.set(index, callback);
         }
     }
 
