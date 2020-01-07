@@ -88,7 +88,7 @@ Anyway, here is a very simple example on how to use the data:
 ```javascript
 import manager from 'memory-manager-service';
 
-class MyClass {
+class Person {
     constructor() {
         manager.create(this, {
             "name": ""
@@ -107,4 +107,15 @@ class MyClass {
         manager.set(this, "name", value);
     }
 }
+```
+### Callbacks
+The service will allow you to add callbacks for each object to monitor whenever the object is updated and/or disposed.
+```javascript
+const person = new Person();
+
+manager.onUpdate(person, () => console.log(`Hello, ${person.name}!`);
+manager.onDispose(person, () => console.log(`Oh no! They disposed ${person.name}`);
+
+person.name = "Kenny"; // Hello, Kenny!
+manager.dispose(person); // Oh no! They disposed Kenny!
 ```
