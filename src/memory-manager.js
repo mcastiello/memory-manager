@@ -73,14 +73,14 @@ gc.addEventListener("message", event => {
             dataMap.set(id, event.data.content);
             break;
         case "delete":
-            const callback = disposeCallbackMap.get(id);
-            if (callback) {
+            const callbacks = disposeCallbackMap.get(id);
+            for (let callback of callbacks) {
                 callback();
-                disposeCallbackMap.delete(id);
             }
             indexReference.delete(id);
             dataMap.delete(id);
             complexDataMap.delete(id);
+            disposeCallbackMap.delete(id);
             updateCallbackMap.delete(id);
             break;
     }
@@ -213,7 +213,7 @@ const storeArray = (index, property, arr) => {
  * @private
  */
 const notifyUpdate = (index, property, value) => {
-    const callback = updateCallbackMap.get(index);
+    const callbacks = updateCallbackMap.get(index);
 
     gc.postMessage({
         "name": "update",
@@ -223,7 +223,7 @@ const notifyUpdate = (index, property, value) => {
         }
     });
     
-    if (callback) {
+    for (let callback of callbacks) {
         callback(property, value);
     }
 };
@@ -262,6 +262,8 @@ class MemoryManager {
             dataMap.set(id, {});
             indexReference.set(id, object);
             complexDataMap.set(id, new Map());
+            disposeCallbackMap.set(id, []);
+            updateCallbackMap.set(id, []);
             
             this.update(object, data);
         }
@@ -383,9 +385,10 @@ class MemoryManager {
      */
     onDispose(reference, callback) {
         const index = typeof reference === "string" ? reference : indexReference.get(reference);
+        const callbacks = disposeCallbackMap.get(index);
 
-        if (index) {
-            disposeCallbackMap.set(index, callback);
+        if (callbacks && typeof callback === "function") {
+            callbacks.push(callback);
         }
     }
 
@@ -396,9 +399,10 @@ class MemoryManager {
      */
     onUpdate(reference, callback) {
         const index = typeof reference === "string" ? reference : indexReference.get(reference);
+        const callbacks = updateCallbackMap.get(index);
 
-        if (index) {
-            updateCallbackMap.set(index, callback);
+        if (callbacks && typeof callback === "function") {
+            callbacks.push(callback);
         }
     }
 
