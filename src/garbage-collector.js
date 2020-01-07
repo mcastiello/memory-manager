@@ -93,21 +93,23 @@ const updateData = (index, data) => {
     const content = dataMap.get(index);
     let i, ii;
 
-    content.timestamp = Date.now();
+    if (content) {
+        content.timestamp = Date.now();
 
-    if (data) {
-        Object.assign(content.data, data);
+        if (data) {
+            Object.assign(content.data, data);
 
-        const references = loadReferences(content.data);
-        const diff = diffReferences(content.references, references);
+            const references = loadReferences(content.data);
+            const diff = diffReferences(content.references, references);
 
-        content.references = references;
+            content.references = references;
 
-        for (i=0, ii=diff.added.length; i<ii; i++) {
-            addReference(diff.added[i], index);
-        }
-        for (i=0, ii=diff.removed.length; i<ii; i++) {
-            removeReference(diff.removed[i], index);
+            for (i=0, ii=diff.added.length; i<ii; i++) {
+                addReference(diff.added[i], index);
+            }
+            for (i=0, ii=diff.removed.length; i<ii; i++) {
+                removeReference(diff.removed[i], index);
+            }
         }
     }
 };
@@ -119,16 +121,18 @@ const updateData = (index, data) => {
 const disposeData = index => {
     const content = dataMap.get(index);
 
-    for (let reference of content.references) {
-        disposeReference(reference, index);
+    if (content) {
+        for (let reference of content.references) {
+            disposeReference(reference, index);
+        }
+
+        dataMap.delete(index);
+
+        self.postMessage({
+            "name": "delete",
+            "index": index
+        });
     }
-
-    dataMap.delete(index);
-
-    self.postMessage({
-        "name": "delete",
-        "index": index
-    });
 };
 
 /**
