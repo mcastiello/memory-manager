@@ -1,6 +1,6 @@
 {
   "name": "memory-manager-service",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "",
   "main": "src/memory-manager.js",
   "scripts": {
@@ -11,7 +11,7 @@
     "url": "git+https://github.com/mcastiello/memory-manager.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "Marco Castiello",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/mcastiello/memory-manager/issues"
