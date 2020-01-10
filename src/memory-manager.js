@@ -5,7 +5,7 @@
  * Project: MemoryManager.js
  */
 
-import IndexMap from "./index-map";
+import IndexMap from "index-map-class";
 import GarbageCollector from "./garbage-collector";
 
 /**
