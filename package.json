@@ -9,8 +9,8 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mcastiello/memory-manager.git"
-  },,
-  "publishConfig": { "registry": "https://npm.pkg.github.com/" }
+  },
+  "publishConfig": { "registry": "https://npm.pkg.github.com/" },
   "keywords": ["Memory", "Allocation", "Garbage Collector"],
   "author": "Marco Castiello",
   "license": "ISC",
