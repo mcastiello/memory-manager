@@ -21,5 +21,9 @@
     "webpack": "^4.41.5",
     "webpack-cli": "^3.3.10",
     "worker-loader": "^2.0.0"
+  },
+  "dependencies": {
+    "index-map-class": "^1.0.0",
+    "thread-manager-service": "^1.0.0"
   }
 }
