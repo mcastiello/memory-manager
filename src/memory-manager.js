@@ -6,6 +6,7 @@
  */
 
 import IndexMap from "index-map-class";
+import Threads from "thread-manager-service";
 import GarbageCollector from "./garbage-collector";
 
 /**
@@ -52,10 +53,17 @@ const updateCallbackMap = new Map();
 
 /**
  * Reference to the garbage collector.
- * @type {Worker}
+ * @type {WebThread}
  * @private
  */
-const gc = new GarbageCollector();
+let garbageCollector = null;
+
+/**
+ * Queue of messages to send to the garbage collector as soon as it's ready.
+ * @type {Array}
+ * @private
+ */
+let garbageCollectorQueue = [];
 
 /**
  * Number of milliseconds used by the garbage collector to 
@@ -65,25 +73,36 @@ const gc = new GarbageCollector();
  */
 let collectionTime = 30000;
 
-// Add the listener to all the possible events triggered by the garbage collector.
-gc.addEventListener("message", event => {
-    const id = event.data.index;
-    switch (event.data.name) {
-        case "updated":
-            dataMap.set(id, event.data.content);
-            break;
-        case "delete":
-            const callbacks = disposeCallbackMap.get(id);
-            for (let callback of callbacks) {
-                callback();
-            }
-            indexReference.delete(id);
-            dataMap.delete(id);
-            complexDataMap.delete(id);
-            disposeCallbackMap.delete(id);
-            updateCallbackMap.delete(id);
-            break;
+// Start the garbage collector thread.
+Threads.run(GarbageCollector).then(thread => {
+    garbageCollector = thread;
+
+    // Add the listener to all the possible events triggered by the garbage collector.
+    garbageCollector.addEventListener("message", event => {
+        const id = event.data.index;
+        switch (event.data.name) {
+            case "updated":
+                dataMap.set(id, event.data.content);
+                break;
+            case "delete":
+                const callbacks = disposeCallbackMap.get(id);
+                for (let callback of callbacks) {
+                    callback();
+                }
+                indexReference.delete(id);
+                dataMap.delete(id);
+                complexDataMap.delete(id);
+                disposeCallbackMap.delete(id);
+                updateCallbackMap.delete(id);
+                break;
+        }
+    });
+    
+    // Execute the queue of messages already generated.
+    for (let message of garbageCollectorQueue) {
+        garbageCollector.postMessage(message);
     }
+    garbageCollectorQueue.length = 0;
 });
 
 // Initialise all the index tokens.
@@ -151,7 +170,7 @@ const getArrayValue = (index, list, id) => {
         }
     }
 
-    gc.postMessage({
+    notifyGarbageCollector({
         "name": "update",
         "index": index
     });
@@ -215,7 +234,7 @@ const storeArray = (index, property, arr) => {
 const notifyUpdate = (index, property, value) => {
     const callbacks = updateCallbackMap.get(index);
 
-    gc.postMessage({
+    notifyGarbageCollector({
         "name": "update",
         "index": index,
         "content": {
@@ -225,6 +244,19 @@ const notifyUpdate = (index, property, value) => {
     
     for (let callback of callbacks) {
         callback(property, value);
+    }
+};
+
+/**
+ * Send a message to the garbage collector or store it into a queue if it's not yet ready.
+ * @param {Object} message
+ * @private
+ */
+const notifyGarbageCollector = message => {
+    if (garbageCollector) {
+        garbageCollector.postMessage(message);
+    } else {
+        garbageCollectorQueue.push(message);
     }
 };
 
@@ -254,7 +286,7 @@ class MemoryManager {
                 "id": id
             }, content);
 
-            gc.postMessage({
+            notifyGarbageCollector({
                 "name": "create",
                 "index": id
             });
@@ -290,7 +322,7 @@ class MemoryManager {
                 value = complexDataMap.get(index).get(property);
             }
             
-            gc.postMessage({
+            notifyGarbageCollector({
                 "name": "update",
                 "index": index
             });
@@ -354,7 +386,7 @@ class MemoryManager {
         }
 
         if (indexReference.has(reference)) {
-            gc.postMessage({
+            notifyGarbageCollector({
                 "name": "update",
                 "index": indexReference.get(reference)
             });
@@ -371,7 +403,7 @@ class MemoryManager {
         const index = typeof reference === "string" ? reference : indexReference.get(reference);
 
         if (index) {
-            gc.postMessage({
+            notifyGarbageCollector({
                 "name": "dispose",
                 "index": index
             });
@@ -410,7 +442,7 @@ class MemoryManager {
      * Flush the memory.
      */
     flush() {
-        gc.postMessage({
+        notifyGarbageCollector({
             "name": "flush"
         });
     }
@@ -432,7 +464,7 @@ class MemoryManager {
         if (!isNaN(time)) {
             collectionTime = Math.round(time);
             
-            gc.postMessage({
+            notifyGarbageCollector({
                 "name": "time",
                 "value": collectionTime
             });
