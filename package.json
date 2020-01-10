@@ -10,7 +10,7 @@
     "type": "git",
     "url": "git+https://github.com/mcastiello/memory-manager.git"
   },
-  "keywords": [],
+  "keywords": ["Memory", "Allocation", "Garbage Collector"],
   "author": "Marco Castiello",
   "license": "ISC",
   "bugs": {
