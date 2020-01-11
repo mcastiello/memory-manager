@@ -12,16 +12,5 @@ module.exports = {
     output: {
         filename: 'memory-manager.js',
         path: path.resolve(__dirname, 'dist'),
-    },
-    module: {
-        rules: [
-            {
-                test: /garbage-collector.js$/,
-                use: {
-                    loader: 'worker-loader',
-                    options: { inline: true, name: "services/gc.js" }
-                }
-            }
-        ]
     }
 };

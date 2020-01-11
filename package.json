@@ -1,6 +1,6 @@
 {
   "name": "memory-manager-service",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "description": "",
   "main": "src/memory-manager.js",
   "scripts": {
@@ -10,7 +10,11 @@
     "type": "git",
     "url": "git+https://github.com/mcastiello/memory-manager.git"
   },
-  "keywords": ["Memory", "Allocation", "Garbage Collector"],
+  "keywords": [
+    "Memory",
+    "Allocation",
+    "Garbage Collector"
+  ],
   "author": "Marco Castiello",
   "license": "ISC",
   "bugs": {
@@ -24,6 +28,6 @@
   },
   "dependencies": {
     "index-map-class": "^1.0.0",
-    "thread-manager-service": "^1.0.0"
+    "thread-manager-service": "^1.0.2"
   }
 }

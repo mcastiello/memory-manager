@@ -27,7 +27,7 @@ export default () => {
     self.addEventListener("message", event => {
         switch (event.data.name) {
             case "create":
-                initialiseData(event.data.index);
+                initialiseData(event.data.index, event.data.keepAlive);
                 break;
             case "update":
                 updateData(event.data.index, event.data.content);
@@ -59,7 +59,7 @@ export default () => {
     const shouldBeCollected = data => {
         const time = Date.now();
 
-        return data.referenced.length === 0 &&
+        return !data.keepAlive && data.referenced.length === 0 &&
             time-data.timestamp > garbageTimeDiff;
     };
 
@@ -75,13 +75,15 @@ export default () => {
     /**
      * Initialise a data element.
      * @param {String} index
+     * @param {Boolean} keepAlive
      */
-    const initialiseData = (index) => {
+    const initialiseData = (index, keepAlive) => {
         dataMap.set(index, {
             "timestamp": Date.now(),
             "data": {},
             "references": [],
-            "referenced": []
+            "referenced": [],
+            "keepAlive": keepAlive
         });
     };
 

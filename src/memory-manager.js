@@ -10,13 +10,6 @@ import Threads from "thread-manager-service";
 import GarbageCollector from "./garbage-collector";
 
 /**
- * List of tokens used to generate a Unique ID
- * @type {ArrayBuffer}
- * @private
- */
-const lut = new ArrayBuffer(256);
-
-/**
  * Cross reference between stored objects and their ID.
  * @type {IndexMap}
  * @private
@@ -87,7 +80,7 @@ Threads.run(GarbageCollector).then(thread => {
             case "delete":
                 const callbacks = disposeCallbackMap.get(id);
                 for (let callback of callbacks) {
-                    callback();
+                    callback(id);
                 }
                 indexReference.delete(id);
                 dataMap.delete(id);
@@ -104,27 +97,6 @@ Threads.run(GarbageCollector).then(thread => {
     }
     garbageCollectorQueue.length = 0;
 });
-
-// Initialise all the index tokens.
-for (let i=0; i<256; i++) {
-    lut[i] = (i<16 ? '0' : '' ) + (i).toString(16).toUpperCase();
-}
-
-/**
- * Generate a UUID.
- * @returns {String}
- * @private
- */
-const generateUUID = () => {
-    const d0 = Math.random()*0xffffffff|0;
-    const d1 = Math.random()*0xffffffff|0;
-    const d2 = Math.random()*0xffffffff|0;
-    const d3 = Math.random()*0xffffffff|0;
-    return lut[d0&0xff]+lut[d0>>8&0xff]+lut[d0>>16&0xff]+lut[d0>>24&0xff]+'-'+
-        lut[d1&0xff]+lut[d1>>8&0xff]+'-'+lut[d1>>16&0x0f|0x40]+lut[d1>>24&0xff]+'-'+
-        lut[d2&0x3f|0x80]+lut[d2>>8&0xff]+'-'+lut[d2>>16&0xff]+lut[d2>>24&0xff]+
-        lut[d3&0xff]+lut[d3>>8&0xff]+lut[d3>>16&0xff]+lut[d3>>24&0xff];
-};
 
 /**
  * Check if the parameter is a complex object, like an instance of a class.
@@ -243,7 +215,7 @@ const notifyUpdate = (index, property, value) => {
     });
     
     for (let callback of callbacks) {
-        callback(property, value);
+        callback(index, property, value);
     }
 };
 
@@ -269,11 +241,14 @@ class MemoryManager {
      * Create the object data and initialise it with the provided content.
      * The data will be automatically provided with an index.
      * The method will return the generated index.
+     * If the keepAlive is set to true, the object will not be garbage collected
+     * and will require to be disposed manually.
      * @param {Object} object
      * @param {Object} [content]
+     * @param {Boolean} [keepAlive]
      * @returns {String}
      */
-    create(object, content) {
+    create(object, content, keepAlive) {
         let id;
         content = content || {};
         
@@ -281,14 +256,15 @@ class MemoryManager {
             id = indexReference.get(object);
             this.update(object, content);
         } else {
-            id = content.id || generateUUID();
+            id = content.id || Threads.generateUUID();
             const data = Object.assign({
                 "id": id
             }, content);
 
             notifyGarbageCollector({
                 "name": "create",
-                "index": id
+                "index": id,
+                "keepAlive": Boolean(keepAlive)
             });
 
             dataMap.set(id, {});
