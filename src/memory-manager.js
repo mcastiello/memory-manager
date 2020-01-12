@@ -185,7 +185,7 @@ const storeArray = (index, property, arr) => {
     };
     
     for (let i=0, ii=arr.length; i<ii; i++) {
-        if (isManagedObject(value)) {
+        if (isManagedObject(arr[i])) {
             arr[i] = indexReference.get(arr[i]);
         }
     }
