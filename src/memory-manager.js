@@ -352,6 +352,15 @@ class MemoryManager {
     }
 
     /**
+     * Check if a reference exists.
+     * @param {String|Object} reference
+     * @returns {Boolean}
+     */
+    has(reference) {
+        return indexReference.has(reference);
+    }
+
+    /**
      * Get the reference for the requested object.
      * @param {String|Object} reference
      * @returns {Object}
