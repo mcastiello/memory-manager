@@ -185,9 +185,14 @@ const storeArray = (index, property, arr) => {
     };
     
     for (let i=0, ii=arr.length; i<ii; i++) {
-        if (isManagedObject(arr[i])) {
-            arr[i] = indexReference.get(arr[i]);
+        let value = arr[i];
+        if (isManagedObject(value)) {
+            value = indexReference.get(value);
+        } else if (isComplexObject(value)) {
+            complexDataMap.get(index).set(property + "::" + i, value);
+            value = "ComplexObject::" + property + "::" + i;
         }
+        arr[i] = value;
     }
     complexDataMap.get(index).set(property, new Proxy(arr, arrayTrap));
     
