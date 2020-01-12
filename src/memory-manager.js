@@ -104,8 +104,8 @@ Threads.run(GarbageCollector).then(thread => {
  * @private
  */
 const isComplexObject = (obj) => {
-    return Boolean(obj) && typeof obj === "object" && 
-        obj.constructor !== Object && !Array.isArray(obj);
+    return Boolean(obj) && ((typeof obj === "object" && obj.constructor !== Object) ||
+        typeof obj === "function") && !Array.isArray(obj);
 };
 
 /**
