@@ -5,8 +5,8 @@
  * Project: MemoryManager.js
  */
 
-import IndexMap from "index-map-class";
-import Threads from "thread-manager-service";
+import "index-map-class";
+import "thread-manager-service";
 import GarbageCollector from "./garbage-collector";
 
 /**

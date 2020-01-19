@@ -1,10 +1,11 @@
 {
   "name": "memory-manager-service",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "",
-  "main": "src/memory-manager.js",
+  "main": "dist/memory-manager.js",
   "scripts": {
-    "build": "webpack"
+    "build": "webpack",
+    "test": "jest"
   },
   "repository": {
     "type": "git",
@@ -22,12 +23,13 @@
   },
   "homepage": "https://github.com/mcastiello/memory-manager#readme",
   "devDependencies": {
+    "@babel/plugin-transform-modules-commonjs": "^7.8.3",
+    "jest": "^24.9.0",
     "webpack": "^4.41.5",
-    "webpack-cli": "^3.3.10",
-    "worker-loader": "^2.0.0"
+    "webpack-cli": "^3.3.10"
   },
   "dependencies": {
-    "index-map-class": "^1.0.0",
-    "thread-manager-service": "^1.0.2"
+    "index-map-class": "^1.0.2",
+    "thread-manager-service": "^1.0.6"
   }
 }
